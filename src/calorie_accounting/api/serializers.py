@@ -16,6 +16,10 @@ class IngredientSerializer(ModelSerializer):
     class Meta(object):
         model = Ingredient
         fields = ('id', 'grocery', 'amount_in_grams')
+        extra_kwargs = {'id': {'read_only': False}}
+
+    def update(self, instance, validated_data):
+        print(instance)
 
 
 class MealSerializer(ModelSerializer):
@@ -27,8 +31,23 @@ class MealSerializer(ModelSerializer):
         for ingredient in ingredients:
             ingr = Ingredient.objects.create(**ingredient)
             meal.ingredients.add(ingr)
-        meal.save()
+        #meal.save()
         return meal
+
+    def update(self,instance, validated_data):
+
+        instance.name = validated_data.get('name', instance.name)
+        instance.description = validated_data.get('description', instance.description)
+        instance.active = validated_data.get('active', instance.active)
+
+        ingredients = validated_data.pop('ingredients')
+        for ingredient in ingredients:
+            ingr = Ingredient.objects.get(id=ingredient.get('id'))
+            ingr.amount_in_grams = ingredient.get('amount_in_grams', ingr.amount_in_grams)
+            ingr.save()
+
+        instance.save() 
+        return instance
 
     class Meta(object):
         model = Meal
